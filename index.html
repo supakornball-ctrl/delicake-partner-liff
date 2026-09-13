@@ -36,7 +36,7 @@
         // LIFF ID สำหรับ Delicake x Partner
         const LIFF_ID = "2011574074-8GA5Rs5p"; 
         
-        // ใส่ n8n Webhook URL ของคุณบอลตรงนี้
+        // n8n Production Webhook URL
         const N8N_WEBHOOK_URL = "https://delicake-n8n.synology.me/webhook/delicake-partner";
 
         let userProfile = {};
@@ -105,7 +105,7 @@
             })
             .then(response => {
                 alert("บันทึกสิทธิ์สำเร็จ! ระบบกำลังพาไปหน้าแชทหลัก");
-                // เปลี่ยนไปที่ LINE OA: @Delicake
+                // เปลี่ยนเส้นทางไปยัง LINE OA: Delicake (@delicake)
                 window.location.href = "https://line.me/R/ti/p/%40delicake"; 
             })
             .catch(error => {
