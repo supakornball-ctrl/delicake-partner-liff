@@ -46,10 +46,10 @@
         // ดึงค่าพารามิเตอร์จาก URL
         const urlParams = new URLSearchParams(window.location.search);
         
-        // shop = lineUserId ของร้าน (สำหรับยิงแจ้งเตือน ป้องกันชื่อซ้ำ 100%)
+        // shop = lineUserId ของร้าน (สำหรับยิงแจ้งเตือน)
         partnerShopId = urlParams.get('shop') || "GENERAL";
         
-        // name = ชื่อร้านสำหรับแสดงผลบนหน้าจอ (ถ้าไม่ได้ใส่มา ให้ใช้ค่า shop แทน)
+        // name = ชื่อร้านสำหรับแสดงผลบนหน้าจอ
         displayShopName = urlParams.get('name') || partnerShopId;
 
         // แสดงชื่อร้านบนหน้าจอ
@@ -98,8 +98,8 @@
                 lineUserId: userProfile.userId,
                 displayName: userProfile.displayName,
                 pictureUrl: userProfile.pictureUrl,
-                partnerCode: partnerShopId,      // lineUserId ของร้าน
-                shopName: displayShopName,       // ชื่อร้านค้าที่แสดงผล
+                partnerCode: partnerShopId,      // ส่ง lineUserId ของร้านเข้าระบบ
+                shopName: displayShopName,       // ส่งชื่อร้านค้าเข้าระบบ
                 timestamp: new Date().toISOString()
             };
 
