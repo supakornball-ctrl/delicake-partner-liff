@@ -40,13 +40,20 @@
         const N8N_WEBHOOK_URL = "https://delicake-n8n.synology.me/webhook/delicake-partner";
 
         let userProfile = {};
-        let partnerCode = "";
+        let partnerShopId = "";
+        let displayShopName = "";
 
-        // ดึงค่า ?shop= จาก URL
+        // ดึงค่าพารามิเตอร์จาก URL
         const urlParams = new URLSearchParams(window.location.search);
-        partnerCode = urlParams.get('shop') || "GENERAL";
+        
+        // shop = lineUserId ของร้าน (สำหรับยิงแจ้งเตือน ป้องกันชื่อซ้ำ 100%)
+        partnerShopId = urlParams.get('shop') || "GENERAL";
+        
+        // name = ชื่อร้านสำหรับแสดงผลบนหน้าจอ (ถ้าไม่ได้ใส่มา ให้ใช้ค่า shop แทน)
+        displayShopName = urlParams.get('name') || partnerShopId;
 
-        document.getElementById('shop-name').innerHTML = `รหัสพาร์ทเนอร์ผู้แนะนำ: <b>${partnerCode}</b>`;
+        // แสดงชื่อร้านบนหน้าจอ
+        document.getElementById('shop-name').innerHTML = `รหัสพาร์ทเนอร์ผู้แนะนำ: <b>${displayShopName}</b>`;
 
         // เริ่มต้นใช้งาน LIFF
         document.addEventListener("DOMContentLoaded", function () {
@@ -64,7 +71,7 @@
                 });
         });
 
-        // ฟังก์ชันดึงโปรไฟล์ LINE
+        // ฟังก์ชันดึงโปรไฟล์ LINE ลูกค้า
         function loadUserProfile() {
             liff.getProfile()
                 .then(profile => {
@@ -81,7 +88,7 @@
                 });
         }
 
-        // ฟังก์ชันส่งข้อมูลเข้า n8n เมื่อลูกค้ากดปุ่ม
+        // ฟังก์ชันส่งข้อมูลเข้า n8n เมื่อลูกค้ากดรับสิทธิ์
         function claimPrivilege() {
             const btn = document.getElementById('submit-btn');
             btn.innerText = "กำลังบันทึกข้อมูล...";
@@ -91,7 +98,8 @@
                 lineUserId: userProfile.userId,
                 displayName: userProfile.displayName,
                 pictureUrl: userProfile.pictureUrl,
-                partnerCode: partnerCode,
+                partnerCode: partnerShopId,      // lineUserId ของร้าน
+                shopName: displayShopName,       // ชื่อร้านค้าที่แสดงผล
                 timestamp: new Date().toISOString()
             };
 
