@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>รับสิทธิ์ส่วนลด Delicake x Partner</title>
-    <!-- โหลด LINE SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         body { font-family: sans-serif; background-color: #f5f5f5; text-align: center; padding: 20px; margin: 0; }
@@ -33,93 +32,105 @@
     </div>
 
     <script>
-        // LIFF ID สำหรับ Delicake x Partner
-        const LIFF_ID = "2011574074-8GA5Rs5p"; 
+        var LIFF_ID = "2011574074-8GA5Rs5p";
+        var userProfile = {};
+        var partnerShopId = "GENERAL";
+        var displayShopName = "GENERAL";
+        var N8N_WEBHOOK_URL = "https://delicake-n8n.synology.me/webhook/delicake-partner";
 
-        let userProfile = {};
-        let partnerShopId = "";
-        let displayShopName = "";
+        function updateParamsFromUrl() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var shop = urlParams.get("shop");
+            var name = urlParams.get("name");
+            var type = urlParams.get("type");
 
-        // ดึงค่าพารามิเตอร์จาก URL
-        const urlParams = new URLSearchParams(window.location.search);
-        
-        // shop = lineUserId ของร้านหรือวัด (สำหรับยิงแจ้งเตือน)
-        partnerShopId = urlParams.get('shop') || "GENERAL";
-        
-        // name = ชื่อร้านหรือชื่อวัดสำหรับแสดงผลบนหน้าจอ
-        displayShopName = urlParams.get('name') || partnerShopId;
+            if (!shop && urlParams.get("liff.state")) {
+                var stateParams = new URLSearchParams(urlParams.get("liff.state"));
+                shop = stateParams.get("shop");
+                name = stateParams.get("name");
+                type = stateParams.get("type");
+            }
 
-        // ตรวจสอบว่าเป็นลิงก์ของโปรเจกต์งานวัดหรือไม่ (เช็กจาก type=wat หรือชื่อขึ้นต้นด้วย wat / มีคำว่า วัด)
-        const projectType = (urlParams.get('type') || "").toLowerCase();
-        const isTempleProject = projectType === "wat" || 
-                                displayShopName.toLowerCase().startsWith("wat") || 
-                                displayShopName.includes("วัด");
+            partnerShopId = shop || "GENERAL";
+            displayShopName = name || partnerShopId;
 
-        // เลือก n8n Webhook URL อัตโนมัติตามประเภทโปรเจกต์
-        const N8N_WEBHOOK_URL = isTempleProject
-            ? "https://delicake-n8n.synology.me/webhook/delicake-temple"
-            : "https://delicake-n8n.synology.me/webhook/delicake-partner";
+            var projectType = (type || "").toLowerCase();
+            var lowerName = displayShopName.toLowerCase();
+            var isTempleProject = (projectType === "wat") ||
+                                  (lowerName.indexOf("wat") === 0) ||
+                                  (displayShopName.indexOf("วัด") !== -1);
 
-        // แสดงชื่อร้าน/วัดบนหน้าจอ
-        document.getElementById('shop-name').innerHTML = `รหัสพาร์ทเนอร์ผู้แนะนำ: <b>${displayShopName}</b>`;
+            N8N_WEBHOOK_URL = isTempleProject
+                ? "https://delicake-n8n.synology.me/webhook/delicake-temple"
+                : "https://delicake-n8n.synology.me/webhook/delicake-partner";
 
-        // เริ่มต้นใช้งาน LIFF
+            document.getElementById("shop-name").innerHTML = "รหัสพาร์ทเนอร์ผู้แนะนำ: <b>" + displayShopName + "</b>";
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
+            updateParamsFromUrl();
             liff.init({ liffId: LIFF_ID })
-                .then(() => {
+                .then(function () {
+                    updateParamsFromUrl();
                     if (!liff.isLoggedIn()) {
                         liff.login();
                     } else {
                         loadUserProfile();
                     }
                 })
-                .catch((err) => {
+                .catch(function (err) {
                     console.error("LIFF Initialization failed", err);
-                    document.getElementById('user-info').innerHTML = `<p style="color:red;">เกิดข้อผิดพลาดในการโหลดระบบ LINE</p>`;
+                    document.getElementById("user-info").innerHTML = '<p style="color:red;">เกิดข้อผิดพลาดในการโหลดระบบ LINE</p>';
                 });
         });
 
-        // ฟังก์ชันดึงโปรไฟล์ LINE ลูกค้า
         function loadUserProfile() {
             liff.getProfile()
-                .then(profile => {
+                .then(function (profile) {
                     userProfile = profile;
-                    document.getElementById('user-info').innerHTML = `
-                        <img class="profile" src="${profile.pictureUrl}" alt="Profile">
-                        <h3>คุณ ${profile.displayName}</h3>
-                        <p>พร้อมรับสิทธิ์ส่วนลดพิเศษจาก Delicake แล้ว</p>
-                    `;
-                    document.getElementById('submit-btn').style.display = "block";
+                    document.getElementById("user-info").innerHTML =
+                        '<img class="profile" src="' + profile.pictureUrl + '" alt="Profile">' +
+                        '<h3>คุณ ' + profile.displayName + '</h3>' +
+                        '<p>พร้อมรับสิทธิ์ส่วนลดพิเศษจาก Delicake แล้ว</p>';
+                    document.getElementById("submit-btn").style.display = "block";
                 })
-                .catch(err => {
+                .catch(function (err) {
                     console.error("error", err);
                 });
         }
 
-        // ฟังก์ชันส่งข้อมูลเข้า n8n เมื่อลูกค้ากดรับสิทธิ์
         function claimPrivilege() {
-            const btn = document.getElementById('submit-btn');
+            var btn = document.getElementById("submit-btn");
             btn.innerText = "กำลังบันทึกข้อมูล...";
             btn.disabled = true;
 
-            const payload = {
+            var payload = {
                 lineUserId: userProfile.userId,
                 displayName: userProfile.displayName,
                 pictureUrl: userProfile.pictureUrl,
-                partnerCode: partnerShopId,      // ส่ง lineUserId เข้าระบบ
-                shopName: displayShopName,       // ส่งชื่อร้าน/วัดเข้าระบบ
+                partnerCode: partnerShopId,
+                shopName: displayShopName,
                 timestamp: new Date().toISOString()
             };
 
-            // ส่งข้อมูลไปที่ n8n Webhook
             fetch(N8N_WEBHOOK_URL, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(payload)
             })
-            .then(response => {
+            .then(function (response) {
                 alert("บันทึกสิทธิ์สำเร็จ! ระบบกำลังพาไปหน้าแชทหลัก");
-                // เปลี่ยนเส้นทางไปยัง LINE OA หลักของ Delicake (@delicake)
-                window.location.href =
+                window.location.href = "https://line.me/R/ti/p/%40delicake";
+            })
+            .catch(function (error) {
+                console.error("Error:", error);
+                alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+                btn.innerText = "กดเพื่อรับสิทธิ์ส่วนลด";
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
