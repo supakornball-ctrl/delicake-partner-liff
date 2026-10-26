@@ -35,9 +35,6 @@
     <script>
         // LIFF ID สำหรับ Delicake x Partner
         const LIFF_ID = "2011574074-8GA5Rs5p"; 
-        
-        // n8n Production Webhook URL
-        const N8N_WEBHOOK_URL = "https://delicake-n8n.synology.me/webhook/delicake-partner";
 
         let userProfile = {};
         let partnerShopId = "";
@@ -46,13 +43,24 @@
         // ดึงค่าพารามิเตอร์จาก URL
         const urlParams = new URLSearchParams(window.location.search);
         
-        // shop = lineUserId ของร้าน (สำหรับยิงแจ้งเตือน)
+        // shop = lineUserId ของร้านหรือวัด (สำหรับยิงแจ้งเตือน)
         partnerShopId = urlParams.get('shop') || "GENERAL";
         
-        // name = ชื่อร้านสำหรับแสดงผลบนหน้าจอ
+        // name = ชื่อร้านหรือชื่อวัดสำหรับแสดงผลบนหน้าจอ
         displayShopName = urlParams.get('name') || partnerShopId;
 
-        // แสดงชื่อร้านบนหน้าจอ
+        // ตรวจสอบว่าเป็นลิงก์ของโปรเจกต์งานวัดหรือไม่ (เช็กจาก type=wat หรือชื่อขึ้นต้นด้วย wat / มีคำว่า วัด)
+        const projectType = (urlParams.get('type') || "").toLowerCase();
+        const isTempleProject = projectType === "wat" || 
+                                displayShopName.toLowerCase().startsWith("wat") || 
+                                displayShopName.includes("วัด");
+
+        // เลือก n8n Webhook URL อัตโนมัติตามประเภทโปรเจกต์
+        const N8N_WEBHOOK_URL = isTempleProject
+            ? "https://delicake-n8n.synology.me/webhook/delicake-temple"
+            : "https://delicake-n8n.synology.me/webhook/delicake-partner";
+
+        // แสดงชื่อร้าน/วัดบนหน้าจอ
         document.getElementById('shop-name').innerHTML = `รหัสพาร์ทเนอร์ผู้แนะนำ: <b>${displayShopName}</b>`;
 
         // เริ่มต้นใช้งาน LIFF
@@ -98,8 +106,8 @@
                 lineUserId: userProfile.userId,
                 displayName: userProfile.displayName,
                 pictureUrl: userProfile.pictureUrl,
-                partnerCode: partnerShopId,      // ส่ง lineUserId ของร้านเข้าระบบ
-                shopName: displayShopName,       // ส่งชื่อร้านค้าเข้าระบบ
+                partnerCode: partnerShopId,      // ส่ง lineUserId เข้าระบบ
+                shopName: displayShopName,       // ส่งชื่อร้าน/วัดเข้าระบบ
                 timestamp: new Date().toISOString()
             };
 
@@ -113,16 +121,5 @@
             })
             .then(response => {
                 alert("บันทึกสิทธิ์สำเร็จ! ระบบกำลังพาไปหน้าแชทหลัก");
-                // เปลี่ยนเส้นทางไปยัง LINE OA: Delicake (@delicake)
-                window.location.href = "https://line.me/R/ti/p/%40delicake"; 
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
-                btn.innerText = "กดเพื่อรับสิทธิ์ส่วนลด";
-                btn.disabled = false;
-            });
-        }
-    </script>
-</body>
-</html>
+                // เปลี่ยนเส้นทางไปยัง LINE OA หลักของ Delicake (@delicake)
+                window.location.href =
